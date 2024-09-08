@@ -32,6 +32,7 @@ impl CollisionResult {
         }
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     fn combine(self, other: CollisionResult) -> Self {
         let combined = [
             self.0[0].or(other.0[0]),
@@ -49,5 +50,22 @@ impl FromIterator<CollisionResult> for CollisionResult {
         iter.into_iter()
             .reduce(CollisionResult::combine)
             .unwrap_or_default()
+    }
+}
+
+impl FromIterator<Option<Vector2>> for CollisionResult {
+    fn from_iter<T: IntoIterator<Item = Option<Vector2>>>(iter: T) -> Self {
+        iter.into_iter()
+            .collect::<Vec<_>>()
+            .chunks(4)
+            .map(|chunk| match *chunk {
+                [] => CollisionResult::default(),
+                [top] => CollisionResult::new(top, None, None, None),
+                [top, right] => CollisionResult::new(top, right, None, None),
+                [top, right, bottom] => CollisionResult::new(top, right, bottom, None),
+                [top, right, bottom, left] => CollisionResult::new(top, right, bottom, left),
+                [..] => unreachable!(),
+            })
+            .collect::<CollisionResult>()
     }
 }

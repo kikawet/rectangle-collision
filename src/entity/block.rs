@@ -7,7 +7,7 @@ use raylib::{
 
 use crate::{
     collision::collision_result::CollisionResult,
-    traits::{Position, Redirect, Sides},
+    traits::{Collision, Position, Redirect, Sides},
 };
 
 use super::{segment::Segment, wall::Wall};
@@ -113,25 +113,18 @@ impl Block {
         self.acc = Vector2::zero();
     }
 
-    pub fn calculate_collisions(&self, walls: &[Wall], boxes: &[Block]) -> Option<CollisionResult> {
+    pub fn calculate_collisions(
+        &self,
+        walls: &[Wall],
+        blocks: &[Block],
+    ) -> Option<CollisionResult> {
         walls
             .iter()
-            .find_map(|wall| wall.check_collision_box(self))
-            .or(boxes.iter().find_map(|b| b.check_collision_box(self)))
-    }
-
-    fn check_collision_box(&self, other: &Block) -> Option<CollisionResult> {
-        if self.id == other.id {
-            return None;
-        }
-
-        let segments = [self.top(), self.right(), self.bottom(), self.left()];
-
-        segments
-            .iter()
-            .map(|segment| segment.check_collision_segment_box(other))
-            .collect::<CollisionResult>()
-            .into_option()
+            .find_map(|wall| wall.check_collision(self).into_option())
+            .or(blocks
+                .iter()
+                .filter(|b| self.id != b.id)
+                .find_map(|b| b.check_collision(self).into_option()))
     }
 }
 

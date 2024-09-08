@@ -4,9 +4,9 @@ use raylib::{
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
 
-use crate::collision::collision_result::CollisionResult;
+use crate::traits::Sides;
 
-use super::{block::Block, segment::Segment};
+use super::segment::Segment;
 
 pub struct Wall {
     position: Segment,
@@ -14,6 +14,7 @@ pub struct Wall {
 }
 
 impl Wall {
+    #[must_use]
     pub fn new(start: Vector2, end: Vector2) -> Self {
         Self {
             position: Segment { start, end },
@@ -37,15 +38,7 @@ impl Wall {
         });
     }
 
-    pub fn check_collision_box(&self, b: &Block) -> Option<CollisionResult> {
-        let segments = self.get_collision_box();
-
-        segments
-            .iter()
-            .find_map(|segment| segment.check_collision_segment_box(b).into_option())
-    }
-
-    fn get_collision_box(&self) -> Vec<Segment> {
+    fn get_collision_box(&self) -> [Segment; 4] {
         let delta = self.position.end - self.position.start;
         let length = delta.length();
 
@@ -59,7 +52,7 @@ impl Wall {
             self.position.end + radius,
         ];
 
-        vec![
+        [
             Segment {
                 start: sides[0],
                 end: sides[2],
@@ -77,5 +70,27 @@ impl Wall {
                 end: sides[0],
             },
         ]
+    }
+}
+
+impl Sides for Wall {
+    fn top(&self) -> Segment {
+        let [top, _, _, _] = self.get_collision_box();
+        top
+    }
+
+    fn right(&self) -> Segment {
+        let [_, right, _, _] = self.get_collision_box();
+        right
+    }
+
+    fn bottom(&self) -> Segment {
+        let [_, _, bottom, _] = self.get_collision_box();
+        bottom
+    }
+
+    fn left(&self) -> Segment {
+        let [_, _, _, left] = self.get_collision_box();
+        left
     }
 }

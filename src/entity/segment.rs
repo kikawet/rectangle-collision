@@ -5,10 +5,6 @@ use raylib::{
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
 
-use crate::{collision::collision_result::CollisionResult, traits::Sides};
-
-use super::block::Block;
-
 pub struct Segment {
     pub start: Vector2,
     pub end: Vector2,
@@ -37,20 +33,11 @@ impl Segment {
 
         let start = self.start + delta * 0.5;
         let end = start - radius;
-        Segment { start, end }
+        Self { start, end }
     }
 
-    fn check_collision_segment(&self, other: &Segment) -> Option<Vector2> {
+    pub fn check_collision_segment(&self, other: &Self) -> Option<Vector2> {
         check_collision_lines(self.start, self.end, other.start, other.end)
-    }
-
-    pub fn check_collision_segment_box(&self, b: &Block) -> CollisionResult {
-        let top = self.check_collision_segment(&b.top());
-        let right = self.check_collision_segment(&b.right());
-        let bottom = self.check_collision_segment(&b.bottom());
-        let left = self.check_collision_segment(&b.left());
-
-        CollisionResult::new(top, right, bottom, left)
     }
 
     pub fn angle(&self) -> f32 {

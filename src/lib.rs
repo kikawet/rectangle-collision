@@ -1,6 +1,7 @@
+use collision::collision_result::CollisionResult;
 use raylib::math::{Rectangle, Vector2};
 
-use traits::{Position, Redirect};
+use traits::{Collision, Position, Redirect, Sides};
 
 pub mod collision;
 pub mod entity;
@@ -31,5 +32,22 @@ impl Redirect for Vector2 {
 
     fn move_left(self) -> Self {
         Vector2::new(self.x.abs() * -1., self.y)
+    }
+}
+
+impl<T: Sides> Collision for T {
+    fn check_collision(&self, other: &impl Sides) -> CollisionResult {
+        let segments = [self.top(), self.right(), self.bottom(), self.left()];
+        let other_segments = [other.top(), other.right(), other.bottom(), other.left()];
+
+        segments
+            .iter()
+            .map(|segment| {
+                other_segments
+                    .iter()
+                    .map(|other| segment.check_collision_segment(other))
+                    .collect::<CollisionResult>()
+            })
+            .collect::<CollisionResult>()
     }
 }

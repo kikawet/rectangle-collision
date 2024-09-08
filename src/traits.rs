@@ -1,6 +1,6 @@
 use raylib::math::Vector2;
 
-use crate::entity::segment::Segment;
+use crate::{collision::collision_result::CollisionResult, entity::segment::Segment};
 
 pub trait Sides {
     fn top(&self) -> Segment;
@@ -19,4 +19,8 @@ pub trait Redirect {
     fn move_down(self) -> Self;
     fn move_right(self) -> Self;
     fn move_left(self) -> Self;
+}
+
+pub trait Collision {
+    fn check_collision(&self, b: &impl Sides) -> CollisionResult;
 }
