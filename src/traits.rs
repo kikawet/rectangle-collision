@@ -1,4 +1,4 @@
-use raylib::math::Vector2;
+use raylib::{math::Vector2, prelude::RaylibDraw};
 
 use crate::{collision::collision_result::CollisionResult, entity::segment::Segment};
 
@@ -23,4 +23,8 @@ pub trait Redirect {
 
 pub trait Collision {
     fn check_collision(&self, b: &impl Sides) -> CollisionResult;
+}
+
+pub trait Draw {
+    fn draw(&self, canvas: &mut impl RaylibDraw);
 }

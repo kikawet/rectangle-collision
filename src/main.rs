@@ -1,4 +1,7 @@
-use collision_simulation::entity::{block::Block, wall::Wall};
+use collision_simulation::{
+    entity::{block::Block, wall::Wall},
+    traits::Draw,
+};
 use raylib::prelude::*;
 
 fn main() {

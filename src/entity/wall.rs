@@ -4,7 +4,7 @@ use raylib::{
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
 
-use crate::traits::Sides;
+use crate::traits::{Draw, Sides};
 
 use super::segment::Segment;
 
@@ -20,15 +20,6 @@ impl Wall {
             position: Segment { start, end },
             thick: 5.,
         }
-    }
-
-    pub fn draw(&self, canvas: &mut RaylibDrawHandle) {
-        canvas.draw_line_ex(
-            self.position.start,
-            self.position.end,
-            self.thick,
-            Color::RED,
-        );
     }
 
     pub fn draw_debug(&self, canvas: &mut RaylibDrawHandle) {
@@ -92,5 +83,16 @@ impl Sides for Wall {
     fn left(&self) -> Segment {
         let [_, _, _, left] = self.get_collision_box();
         left
+    }
+}
+
+impl Draw for Wall {
+    fn draw(&self, canvas: &mut impl RaylibDraw) {
+        canvas.draw_line_ex(
+            self.position.start,
+            self.position.end,
+            self.thick,
+            Color::RED,
+        );
     }
 }

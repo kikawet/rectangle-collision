@@ -7,7 +7,7 @@ use raylib::{
 
 use crate::{
     collision::collision_result::CollisionResult,
-    traits::{Collision, Position, Redirect, Sides},
+    traits::{Collision, Draw, Position, Redirect, Sides},
 };
 
 use super::{segment::Segment, wall::Wall};
@@ -55,10 +55,6 @@ impl Block {
             color: Color::color_from_hsv(get_random(0, 360), 0.9, 0.9),
             acc: Vector2::new(get_random(5000, 10000), get_random(5000, 10000)) * direction,
         }
-    }
-
-    pub fn draw(&self, canvas: &mut RaylibDrawHandle) {
-        canvas.draw_rectangle_rec(self.rec, self.color);
     }
 
     pub fn draw_debug(&self, canvas: &mut RaylibDrawHandle) {
@@ -120,11 +116,11 @@ impl Block {
     ) -> Option<CollisionResult> {
         walls
             .iter()
-            .find_map(|wall| wall.check_collision(self).into_option())
+            .find_map(|wall| self.check_collision(wall).into_option())
             .or(blocks
                 .iter()
                 .filter(|b| self.id != b.id)
-                .find_map(|b| b.check_collision(self).into_option()))
+                .find_map(|b| self.check_collision(b).into_option()))
     }
 }
 
@@ -138,22 +134,22 @@ impl Position for Block {
     }
 }
 
-impl Sides for Block {
+impl Sides for Rectangle {
     #[inline]
     fn top(&self) -> Segment {
         Segment {
             start: self.position(),
-            end: Vector2::new(self.position().x + self.rec.width, self.position().y),
+            end: Vector2::new(self.position().x + self.width, self.position().y),
         }
     }
 
     #[inline]
     fn right(&self) -> Segment {
         Segment {
-            start: Vector2::new(self.position().x + self.rec.width, self.position().y),
+            start: Vector2::new(self.position().x + self.width, self.position().y),
             end: Vector2::new(
-                self.position().x + self.rec.width,
-                self.position().y + self.rec.height,
+                self.position().x + self.width,
+                self.position().y + self.height,
             ),
         }
     }
@@ -161,10 +157,10 @@ impl Sides for Block {
     #[inline]
     fn bottom(&self) -> Segment {
         Segment {
-            start: Vector2::new(self.position().x, self.position().y + self.rec.height),
+            start: Vector2::new(self.position().x, self.position().y + self.height),
             end: Vector2::new(
-                self.position().x + self.rec.width,
-                self.position().y + self.rec.height,
+                self.position().x + self.width,
+                self.position().y + self.height,
             ),
         }
     }
@@ -173,7 +169,31 @@ impl Sides for Block {
     fn left(&self) -> Segment {
         Segment {
             start: self.position(),
-            end: Vector2::new(self.position().x, self.position().y + self.rec.height),
+            end: Vector2::new(self.position().x, self.position().y + self.height),
         }
+    }
+}
+
+impl Sides for Block {
+    fn top(&self) -> Segment {
+        self.rec.top()
+    }
+
+    fn right(&self) -> Segment {
+        self.rec.right()
+    }
+
+    fn bottom(&self) -> Segment {
+        self.rec.bottom()
+    }
+
+    fn left(&self) -> Segment {
+        self.rec.left()
+    }
+}
+
+impl Draw for Block {
+    fn draw(&self, canvas: &mut impl RaylibDraw) {
+        canvas.draw_rectangle_rec(self.rec, self.color);
     }
 }

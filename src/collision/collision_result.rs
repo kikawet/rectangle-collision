@@ -1,13 +1,13 @@
 use raylib::math::Vector2;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CollisionResult(pub [Option<Vector2>; 4]);
 
 impl CollisionResult {
-    const TOP: usize = 0;
-    const RIGHT: usize = 1;
-    const BOTTOM: usize = 2;
-    const LEFT: usize = 3;
+    pub(crate) const TOP: usize = 0;
+    pub(crate) const RIGHT: usize = 1;
+    pub(crate) const BOTTOM: usize = 2;
+    pub(crate) const LEFT: usize = 3;
 
     pub fn new(
         top: Option<Vector2>,
