@@ -31,13 +31,19 @@ impl Block {
         }
     }
 
-    pub fn new_random<F>(id: usize, max_width: i32, max_height: i32, mut get_random: F) -> Self
+    pub fn new_random<F>(
+        id: usize,
+        size: i32,
+        max_width: i32,
+        max_height: i32,
+        mut get_random: F,
+    ) -> Self
     where
         F: FnMut(i32, i32) -> f32,
     {
         let padding = 20;
-        let width = 15;
-        let height = 15;
+        let width = size;
+        let height = size;
 
         let rec = Rectangle {
             x: get_random(padding, max_width - width - padding),

@@ -7,6 +7,7 @@ use raylib::{
 
 use crate::traits::Draw;
 
+#[derive(Debug)]
 pub struct Segment {
     pub start: Vector2,
     pub end: Vector2,
