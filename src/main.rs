@@ -1,16 +1,14 @@
-use std::ops::RangeInclusive;
-
 use collision_simulation::{
     collision::grid::Grid,
     entity::{block::Block, wall::Wall},
-    traits::{Draw, Sides},
+    traits::{Draw, GridItemTrait, Sides},
 };
 use raylib::prelude::*;
 
 fn main() {
     let block_size = 15;
-    let width = block_size * 16 * 4;
-    let height = block_size * 9 * 4;
+    let width = 15 * 16 * 6;
+    let height = 15 * 9 * 6;
     let (mut rl, thread) = raylib::init()
         .size(width, height)
         .title("Collision simulation")
@@ -19,7 +17,7 @@ fn main() {
 
     let random_generator = |min, max| rl.get_random_value::<i32>(min..max).as_f32();
 
-    let mut blocks = (0..200)
+    let mut blocks = (0..1200)
         .map(|id| Block::new_random(id, block_size, width, height, random_generator))
         .collect::<Vec<_>>();
 
@@ -32,33 +30,37 @@ fn main() {
         // right
         Wall::new(Vector2::new(widthf, 0.), Vector2::new(widthf, heightf)),
         //bottom
-        Wall::new(Vector2::new(0., heightf), Vector2::new(widthf, heightf)),
+        Wall::new(
+            Vector2::new(0. + 2., heightf - 3.),
+            Vector2::new(widthf - 2., heightf - 3.),
+        ),
         //left
         Wall::new(Vector2::zero(), Vector2::new(0., heightf)),
     ];
 
     while !rl.window_should_close() {
+        let mut grid = build_grid(block_size, width, height);
+        insert_items(&mut grid, &walls, &blocks);
+
         // Draw
         {
             let fps = rl.get_fps();
-            let mut d = rl.begin_drawing(&thread);
+            let mut display = rl.begin_drawing(&thread);
 
-            d.clear_background(Color::SNOW);
-            blocks.iter().for_each(|b| b.draw(&mut d));
-            walls.iter().for_each(|wall| wall.draw(&mut d));
+            display.clear_background(Color::SNOW);
+            blocks.iter().for_each(|b| b.draw(&mut display));
+            walls.iter().for_each(|wall| wall.draw(&mut display));
 
-            d.draw_text(format!("{fps} fps").as_str(), 20, 20, 24, Color::BLACK);
+            grid.draw(&mut display);
+
+            display.draw_text(format!("{fps} fps").as_str(), 20, 20, 24, Color::BLACK);
         }
 
         // Update
         {
-            let mut grid = build_grid(block_size, width, height);
-
-            insert_items(&mut grid, &walls, &blocks);
-
             let collisions = blocks
                 .iter()
-                .map(|b| b.calculate_collisions(&walls, &blocks))
+                .map(|b| b.calculate_collisions(&grid))
                 .collect::<Vec<_>>();
 
             let dt = rl.get_frame_time();
@@ -70,19 +72,27 @@ fn main() {
     }
 }
 
-fn insert_items<'a>(grid: &mut Grid<&'a dyn Sides>, walls: &'a [Wall], blocks: &'a [Block]) {
+fn insert_items<'a>(
+    grid: &mut Grid<&'a dyn GridItemTrait>,
+    walls: &'a [Wall],
+    blocks: &'a [Block],
+) {
     for wall in walls {
-        let (col_range, row_range) = calculate_ranges(wall, grid.spacing);
-        grid.set_many(wall, col_range, row_range);
+        let (row_range, col_range) = wall.calculate_grid_ranges(grid.spacing);
+        grid.set_many(wall, row_range, col_range);
     }
 
     for block in blocks {
-        let (col_range, row_range) = calculate_ranges(block, grid.spacing);
-        grid.set_many(block, col_range, row_range);
+        let (row_range, col_range) = block.calculate_grid_ranges(grid.spacing);
+        grid.set_many(block, row_range, col_range);
     }
 }
 
-fn build_grid<'a>(block_size: i32, window_width: i32, window_height: i32) -> Grid<&'a dyn Sides> {
+fn build_grid<'a>(
+    block_size: i32,
+    window_width: i32,
+    window_height: i32,
+) -> Grid<&'a dyn GridItemTrait<'a>> {
     let spacing = block_size * 2;
     assert_eq!(
         window_width % spacing,
@@ -99,22 +109,4 @@ fn build_grid<'a>(block_size: i32, window_width: i32, window_height: i32) -> Gri
     let spacing = spacing.as_f32();
 
     Grid::new(rows, cols, spacing)
-}
-
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::cast_sign_loss)]
-fn calculate_ranges(
-    obj: &impl Sides,
-    spacing: f32,
-) -> (RangeInclusive<usize>, RangeInclusive<usize>) {
-    let top = obj.top().start / spacing;
-    let bottom = obj.bottom().end / spacing;
-
-    let col_start = top.x.floor() as usize;
-    let col_end = bottom.x.floor() as usize;
-
-    let row_start = top.y.floor() as usize;
-    let row_end = bottom.y.floor() as usize;
-
-    (col_start..=col_end, row_start..=row_end)
 }

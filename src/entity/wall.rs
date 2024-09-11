@@ -4,10 +4,11 @@ use raylib::{
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
 
-use crate::traits::{Draw, Sides};
+use crate::traits::{Draw, GridItemTrait, Sides};
 
-use super::segment::Segment;
+use super::{block::Block, segment::Segment};
 
+#[derive(Debug)]
 pub struct Wall {
     position: Segment,
     thick: f32,
@@ -66,17 +67,17 @@ impl Wall {
 
 impl Sides for Wall {
     fn top(&self) -> Segment {
-        let [top, _, _, _] = self.get_collision_box();
+        let [top, ..] = self.get_collision_box();
         top
     }
 
     fn right(&self) -> Segment {
-        let [_, right, _, _] = self.get_collision_box();
+        let [_, right, ..] = self.get_collision_box();
         right
     }
 
     fn bottom(&self) -> Segment {
-        let [_, _, bottom, _] = self.get_collision_box();
+        let [_, _, bottom, ..] = self.get_collision_box();
         bottom
     }
 
@@ -96,3 +97,11 @@ impl Draw for Wall {
         );
     }
 }
+
+impl<'a> PartialEq<&'a Block> for Wall {
+    fn eq(&self, _other: &&'a Block) -> bool {
+        false
+    }
+}
+
+impl<'a> GridItemTrait<'a> for Wall {}

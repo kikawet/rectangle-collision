@@ -6,12 +6,16 @@ use raylib::{
 };
 
 use crate::{
-    collision::collision_result::CollisionResult,
-    traits::{Collision, Draw, Position, Redirect, Sides},
+    collision::{
+        collision_result::CollisionResult,
+        grid::{Col, Grid, Row},
+    },
+    traits::{Collision, Draw, GridItemTrait, Position, Redirect, Sides},
 };
 
-use super::{segment::Segment, wall::Wall};
+use super::segment::Segment;
 
+#[derive(Debug)]
 pub struct Block {
     id: usize,
     rec: Rectangle,
@@ -115,18 +119,35 @@ impl Block {
         self.acc = Vector2::zero();
     }
 
-    pub fn calculate_collisions(
-        &self,
-        walls: &[Wall],
-        blocks: &[Block],
+    pub fn calculate_collisions<'a>(
+        &'a self,
+        grid: &'a Grid<&'a dyn GridItemTrait<'a>>,
     ) -> Option<CollisionResult> {
-        walls
+        let (rows, cols) = self.calculate_grid_ranges(grid.spacing);
+        let cols = Col(cols.start().0.saturating_sub(1))..=Col(cols.end().0.saturating_add(1));
+        let rows = Row(rows.start().0.saturating_sub(1))..=Row(rows.end().0.saturating_add(1));
+        grid.get_many(rows, cols)
             .iter()
-            .find_map(|wall| self.check_collision(wall).into_option())
-            .or(blocks
-                .iter()
-                .filter(|b| self.id != b.id)
-                .find_map(|b| self.check_collision(b).into_option()))
+            .filter(|item| ****item != self)
+            .find_map(|item| self.check_collision(**item).into_option())
+    }
+}
+
+impl Sides for Block {
+    fn top(&self) -> Segment {
+        self.rec.top()
+    }
+
+    fn right(&self) -> Segment {
+        self.rec.right()
+    }
+
+    fn bottom(&self) -> Segment {
+        self.rec.bottom()
+    }
+
+    fn left(&self) -> Segment {
+        self.rec.left()
     }
 }
 
@@ -139,6 +160,20 @@ impl Position for Block {
         self.rec.set_position(new_position);
     }
 }
+
+impl Draw for Block {
+    fn draw(&self, canvas: &mut impl RaylibDraw) {
+        canvas.draw_rectangle_rec(self.rec, self.color);
+    }
+}
+
+impl<'a> PartialEq<&'a Block> for Block {
+    fn eq(&self, other: &&'a Block) -> bool {
+        self.id == other.id
+    }
+}
+
+impl<'a> GridItemTrait<'a> for Block {}
 
 impl Sides for Rectangle {
     #[inline]
@@ -180,26 +215,10 @@ impl Sides for Rectangle {
     }
 }
 
-impl Sides for Block {
-    fn top(&self) -> Segment {
-        self.rec.top()
-    }
-
-    fn right(&self) -> Segment {
-        self.rec.right()
-    }
-
-    fn bottom(&self) -> Segment {
-        self.rec.bottom()
-    }
-
-    fn left(&self) -> Segment {
-        self.rec.left()
+impl<'a> PartialEq<&'a Block> for Rectangle {
+    fn eq(&self, _other: &&'a Block) -> bool {
+        false
     }
 }
 
-impl Draw for Block {
-    fn draw(&self, canvas: &mut impl RaylibDraw) {
-        canvas.draw_rectangle_rec(self.rec, self.color);
-    }
-}
+impl<'a> GridItemTrait<'a> for Rectangle {}

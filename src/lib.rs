@@ -1,7 +1,7 @@
 use collision::collision_result::CollisionResult;
 use raylib::math::{Rectangle, Vector2};
 
-use traits::{Collision, Position, Redirect, Sides};
+use traits::{Collision, GridItemTrait, Position, Redirect, Sides};
 
 pub mod collision;
 pub mod entity;
@@ -38,8 +38,8 @@ impl Redirect for Vector2 {
     }
 }
 
-impl<T: Sides> Collision for T {
-    fn check_collision(&self, other: &impl Sides) -> CollisionResult {
+impl<'a, T: Sides> Collision<'a> for T {
+    fn check_collision(&'a self, other: &'a dyn GridItemTrait<'a>) -> CollisionResult {
         let segments = [self.top(), self.right(), self.bottom(), self.left()];
         let other_segments = [other.top(), other.right(), other.bottom(), other.left()];
 

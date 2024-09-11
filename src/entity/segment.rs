@@ -7,7 +7,7 @@ use raylib::{
 
 use crate::traits::Draw;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Segment {
     pub start: Vector2,
     pub end: Vector2,
@@ -41,11 +41,16 @@ impl Segment {
     pub fn angle(&self) -> f32 {
         self.start.angle_to(self.end)
     }
+
+    pub fn length(&self) -> f32 {
+        self.start.distance_to(self.end)
+    }
 }
 
 impl Draw for Segment {
     fn draw(&self, canvas: &mut impl RaylibDraw) {
         canvas.draw_line_ex(self.start, self.end, 1., Color::BLACK);
         canvas.draw_circle_v(self.start, 5., Color::RED);
+        canvas.draw_circle_v(self.end, 5., Color::RED);
     }
 }
